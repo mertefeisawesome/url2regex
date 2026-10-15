@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { urlsToRegex } from "../src/index.js";
+import { urlsToRegex, parseUrlsCsv } from "../src/index.js";
 
 const fullmatch = (pattern, value) => new RegExp(pattern).exec(value)?.[0] === value;
 
@@ -43,23 +43,9 @@ test("long URLs avoid recursion limits", () => {
   for (const value of values) assert.ok(fullmatch(pattern, value));
 });
 
-// The shared fixtures have exactly one CSV column. Parse quoted fields,
-// including doubled quotes and embedded newlines, without a runtime dependency.
 function readFixture(name) {
   const text = readFileSync(new URL(`../../fixtures/real-world/${name}.csv`, import.meta.url), "utf8");
-  const rows = [];
-  let value = "", quoted = false;
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (char === '"') {
-      if (quoted && text[i + 1] === '"') { value += '"'; i++; }
-      else quoted = !quoted;
-    } else if (char === "\n" && !quoted) { rows.push(value.replace(/\r$/, "")); value = ""; }
-    else value += char;
-  }
-  if (value) rows.push(value);
-  assert.equal(rows.shift(), "URL");
-  return rows;
+  return parseUrlsCsv(text, { column: "URL" });
 }
 
 test("shared real-world full URLs and extracted paths", () => {

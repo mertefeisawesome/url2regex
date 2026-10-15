@@ -3,7 +3,10 @@
   "version": "0.1.0-alpha.0",
   "description": "Generate compact regular expressions from lists of URLs or paths.",
   "type": "module",
-  "exports": {".": {"types": "./src/index.d.ts", "import": "./src/index.js"}},
+  "exports": {
+    ".": {"types": "./src/index.d.ts", "import": "./src/index.js"},
+    "./node": {"types": "./src/node.d.ts", "import": "./src/node.js"}
+  },
   "types": "./src/index.d.ts",
   "files": ["src", "LICENSE"],
   "sideEffects": false,

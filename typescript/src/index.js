@@ -1,4 +1,5 @@
 export { validateRegex } from "./validation.js";
+export { parseUrlsCsv } from "./csv.js";
 
 /** Generate a compact, anchored regex string from literal URLs or paths. */
 export function urlsToRegex(values, { target = "input" } = {}) {

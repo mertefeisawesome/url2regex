@@ -3,7 +3,7 @@
 Compact regex generation from URL or path lists, for Node.js and browsers.
 This minimal ESM prerelease ships JavaScript with TypeScript declarations and
 no dependencies or build step. Includes generation, path extraction, and
-validation reports. CSV loading is not yet part of the JavaScript API.
+validation reports, and CSV import.
 
 ```sh
 npm install url2regex@alpha
@@ -52,6 +52,47 @@ checks; invalid argument types throw `TypeError`. Empty arrays, empty strings,
 and whitespace examples are allowed. With no examples, passing confirms syntax
 only. Results apply to supplied examples and do not establish compatibility with
 other regex engines. Use paths as examples when validating path-only output.
+
+## Import CSV
+
+In Node.js, read a UTF-8 CSV file asynchronously:
+
+```js
+import { readUrlsCsv } from "url2regex/node";
+import { urlsToRegex } from "url2regex";
+
+const urls = await readUrlsCsv("pages.csv"); // Automatic column detection
+const selected = await readUrlsCsv("pages.csv", { column: "Landing Page" });
+const pattern = urlsToRegex(urls);
+```
+
+In a browser, pass CSV text from a selected file:
+
+```js
+import { parseUrlsCsv } from "url2regex";
+
+// file is a File selected by the user through an <input type="file">.
+const urls = parseUrlsCsv(await file.text());
+```
+
+`parseUrlsCsv(text, options)` is synchronous and uses no Node APIs. The Node-only
+`readUrlsCsv(file, options)` accepts a filesystem path or file URL and returns a
+promise. The file reader rejects invalid UTF-8 and propagates filesystem errors.
+
+Both support comma-delimited CSV with headers by default, optional BOMs, quoted
+commas, escaped quotes, and multiline fields. Use `{ header: false, column: 0 }`
+for a headerless file's first column. Automatic selection requires exactly one
+column whose nonblank values all look like URLs or paths; indicative headers
+also allow relative paths containing slashes.
+
+Blank cells are skipped, while other values (including whitespace and duplicate
+entries) are preserved. Invalid argument types throw `TypeError`. Malformed CSV,
+inconsistent column counts, empty input, missing/duplicate selected columns, and
+failed or ambiguous detection throw `RangeError`. The generator separately
+rejects surrounding whitespace rather than silently trimming it.
+
+See the [shared sample CSV](https://github.com/mertefeisawesome/url2regex/blob/main/examples/urls.csv)
+and [runnable Node example](https://github.com/mertefeisawesome/url2regex/blob/main/examples/typescript/csv_input.mjs).
 
 Development: run `npm test` from this directory. Tests use the shared real-world
 fixtures. `npm pack` tests and packages the distribution for inspection.
