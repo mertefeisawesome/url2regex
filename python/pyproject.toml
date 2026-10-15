@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "url2regex"
-version = "0.1.0"
+version = "0.1.1"
 description = "Generate compact regular expressions from lists of URLs or paths."
 readme = "README.md"
 license = "MIT"
