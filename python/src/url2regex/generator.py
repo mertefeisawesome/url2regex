@@ -1,5 +1,22 @@
 """Generate literal patterns by factoring shared character prefixes."""
 
+from urllib.parse import urlsplit
+
+
+def _extract_path(value: str) -> str:
+    """Drop URL origins, queries, and fragments without decoding path text."""
+    if not value.startswith("/") and "://" in value:
+        try:
+            parsed = urlsplit(value)
+        except ValueError as error:
+            raise ValueError("Cannot extract path from malformed URL") from error
+        if not parsed.scheme or not parsed.netloc:
+            raise ValueError("Path extraction requires a URL with a scheme and host")
+        return parsed.path or "/"
+    # Existing paths can contain colons, repeated slashes, and semicolons.
+    # Splitting directly avoids interpreting them as a scheme or authority.
+    return value.split("#", 1)[0].split("?", 1)[0] or "/"
+
 
 def _escape(value: str) -> str:
     """Escape regex syntax, without adding source-code slash delimiters."""
@@ -77,8 +94,10 @@ def urls_to_regex(
 ) -> str:
     """Generate a pattern for literal URLs or paths.
 
-    The default target preserves each input string. ``target="path"`` will
-    explicitly extract paths from full URLs. ``output="python_literal"`` will
+    The default target preserves each input string. ``target="path"`` extracts
+    paths from full URLs or accepts existing paths, dropping queries and
+    fragments. URLs with no path become ``/``; trailing slashes and encoded
+    characters are preserved. ``output="python_literal"`` will
     format the result as Python source rather than plain regex text.
 
     Raises TypeError for non-list input or non-string entries, and ValueError
@@ -86,7 +105,6 @@ def urls_to_regex(
     Patterns use start/end anchors and a shared subset of Python, JavaScript,
     and RE2 syntax. Use Python ``re.fullmatch`` for strict whole-string checks;
     Python's ``$`` can also match before a final newline when using search.
-    Explicit path extraction is not implemented yet.
     """
     if target not in ("input", "path"):
         raise ValueError("target must be 'input' or 'path'")
@@ -94,6 +112,6 @@ def urls_to_regex(
         raise ValueError("output must be 'pattern' or 'python_literal'")
     prepared = _prepare_values(values)
     if target == "path":
-        raise NotImplementedError("Path extraction will be implemented separately")
+        prepared = list(dict.fromkeys(_extract_path(value) for value in prepared))
     pattern = _build_pattern(prepared)
     return _python_literal(pattern) if output == "python_literal" else pattern

@@ -63,6 +63,36 @@ class GeneratorTests(unittest.TestCase):
         values = ["a", "a/", "a/a", "a.", "/a", "/."]
         self.assert_matches_only(values, [value for value in candidates if value not in values])
 
-    def test_path_extraction_remains_explicitly_unimplemented(self):
-        with self.assertRaises(NotImplementedError):
-            urls_to_regex(["https://example.com/a"], target="path")
+    def test_path_extraction(self):
+        cases = [
+            ("https://example.com/a?q=1#section", "/a"),
+            ("https://example.com", "/"),
+            ("https://example.com?q=1", "/"),
+            ("https://example.com/a/", "/a/"),
+            ("/a/b", "/a/b"),
+            ("/a/b?q=1#section", "/a/b"),
+            ("https://example.com/a%2Fb;param", "/a%2Fb;param"),
+            ("//a///b/", "//a///b/"),
+            ("/redirect/https://other.example/a", "/redirect/https://other.example/a"),
+        ]
+        for value, expected in cases:
+            with self.subTest(value=value):
+                self.assertEqual(
+                    urls_to_regex([value], target="path"), urls_to_regex([expected])
+                )
+
+    def test_path_extraction_collapses_domains_without_mutating_input(self):
+        values = ["https://one.example/a?q=1", "https://two.example/a#x", "/a"]
+        original = values.copy()
+        self.assertEqual(urls_to_regex(values, target="path"), urls_to_regex(["/a"]))
+        self.assertEqual(values, original)
+
+    def test_path_extraction_supports_python_literal_output(self):
+        literal = urls_to_regex(["https://example.com/a/"], target="path", output="python_literal")
+        self.assertEqual(ast.literal_eval(literal), urls_to_regex(["/a/"]))
+
+    def test_path_extraction_reports_malformed_urls(self):
+        for value in ["https:///a", "https://[broken/a"]:
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    urls_to_regex([value], target="path")
