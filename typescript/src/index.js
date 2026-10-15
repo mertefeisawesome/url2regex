@@ -1,3 +1,5 @@
+export { validateRegex } from "./validation.js";
+
 /** Generate a compact, anchored regex string from literal URLs or paths. */
 export function urlsToRegex(values, { target = "input" } = {}) {
   if (!["input", "path"].includes(target)) throw new TypeError("target must be 'input' or 'path'");
