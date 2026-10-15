@@ -1,6 +1,8 @@
 """Run from the repository root:
 
-PYTHONPATH=python/src python3 python/tests/benchmark_generator.py
+python python/tests/benchmark_generator.py
+
+Use the project's virtual environment after installing with pip install -e ./python.
 
 Options: --repeats 10 --max-generation-seconds 1.0
 
