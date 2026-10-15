@@ -1,0 +1,9 @@
+URL,Category
+https://example.com/,Home
+https://example.com/products/shoes,Product
+https://example.com/products/hats,Product
+https://example.com/products/shoes?color=red,Filtered product
+https://example.com/blog/,Blog
+https://example.com/blog/python,Blog post
+https://example.com/blog/typescript#examples,Blog post
+"https://example.com/search?q=shoes,hats",Search
