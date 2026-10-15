@@ -1,5 +1,9 @@
 # url2regex
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mertefeisawesome/url2regex/main/assets/branding/logo-transparent-light.png" alt="url2regex" width="320">
+</p>
+
 Generate compact regular expressions from lists of URLs or paths. Shared
 prefixes are grouped automatically, literal regex characters are escaped, and
 duplicate inputs are removed without modifying your list.
