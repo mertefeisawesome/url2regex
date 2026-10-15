@@ -1,0 +1,7 @@
+{
+  "manifest_version": 3,
+  "name": "url2regex",
+  "version": "0.1.0",
+  "description": "Turn a list of URLs or paths into a compact regular expression.",
+  "action": {"default_popup": "popup.html"}
+}
