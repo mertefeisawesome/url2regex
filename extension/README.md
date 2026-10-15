@@ -14,6 +14,8 @@ node extension/build.mjs
 In Chrome, open `chrome://extensions`, enable Developer mode, choose **Load
 unpacked**, and select `extension/dist`. Open the toolbar popup to try it.
 
-This is a local prototype, not a submitted store release. It still needs manual
-Chrome testing, store assets, and listing preparation. Uploading a draft can
-establish an extension ID but does not reserve an exclusive display name.
+Create the Chrome Web Store upload ZIP with `python3 extension/package.py`.
+Store copy, privacy form answers, and reviewer instructions are in
+[store/listing.md](store/listing.md); the privacy policy is in
+[PRIVACY.md](PRIVACY.md). Test the unpacked popup in Chrome before submission.
+Uploading a draft establishes an extension ID, not an exclusive display name.

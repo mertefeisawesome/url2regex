@@ -2,6 +2,10 @@ import { mkdir, copyFile, readFile } from "node:fs/promises";
 
 const dist = new URL("./dist/", import.meta.url);
 await mkdir(new URL("lib/", dist), { recursive: true });
+await mkdir(new URL("icons/", dist), { recursive: true });
+for (const size of [16, 32, 48, 128]) {
+  await copyFile(new URL(`icons/icon${size}.png`, import.meta.url), new URL(`icons/icon${size}.png`, dist));
+}
 for (const file of ["manifest.json", "popup.html", "popup.js", "popup.css"]) {
   await copyFile(new URL(file, import.meta.url), new URL(file, dist));
 }
