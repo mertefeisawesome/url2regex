@@ -1,0 +1,97 @@
+name: Python CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Check license consistency and required fixtures
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          assert Path("LICENSE").read_bytes() == Path("python/LICENSE").read_bytes(), "License files differ"
+          for name in ("positives.csv", "negatives.csv"):
+              assert (Path("fixtures/real-world") / name).is_file(), "Missing real-world fixture"
+          PY
+
+      - name: Install build tools
+        run: python -m pip install build twine
+
+      - name: Build source archive and wheel
+        run: python -m build python
+
+      - name: Check distribution metadata and contents
+        run: |
+          python -m twine check --strict python/dist/*
+          python - <<'PY'
+          from pathlib import Path
+          import email
+          import tarfile
+          import zipfile
+          license_text = Path("LICENSE").read_bytes()
+          wheel, = Path("python/dist").glob("*.whl")
+          with zipfile.ZipFile(wheel) as archive:
+              names = archive.namelist()
+              assert {"url2regex/__init__.py", "url2regex/generator.py", "url2regex/csv_loader.py", "url2regex/validation.py"} <= set(names)
+              assert not any(name.startswith(("tests/", "fixtures/")) for name in names)
+              metadata_name, = [name for name in names if name.endswith(".dist-info/METADATA")]
+              metadata = email.message_from_bytes(archive.read(metadata_name))
+              assert metadata["License-Expression"] == "MIT"
+              assert metadata.get_payload().strip() == Path("python/README.md").read_text().strip()
+              license_name, = [name for name in names if name.endswith(".dist-info/licenses/LICENSE")]
+              assert archive.read(license_name) == license_text
+          source, = Path("python/dist").glob("*.tar.gz")
+          with tarfile.open(source) as archive:
+              license_member, = [name for name in archive.getnames() if name.endswith("/LICENSE")]
+              assert archive.extractfile(license_member).read() == license_text
+          PY
+
+      - name: Install wheel into a clean environment
+        run: |
+          python -m venv .venv-wheel
+          .venv-wheel/bin/python -m pip install --no-index --no-deps python/dist/*.whl
+          .venv-wheel/bin/python -m pip check
+
+      - name: Verify installed import and run tests
+        run: |
+          .venv-wheel/bin/python -I - <<'PY'
+          from pathlib import Path
+          import sys
+          import url2regex
+          location = Path(url2regex.__file__).resolve()
+          print("Testing installed package:", location)
+          assert location.is_relative_to(Path(sys.prefix).resolve())
+          assert "site-packages" in location.parts
+          PY
+          .venv-wheel/bin/python -I -m unittest discover -s python/tests -v
+
+      - name: Run examples against installed package
+        run: |
+          for example in examples/python/*.py; do
+            .venv-wheel/bin/python -I "$example"
+          done
