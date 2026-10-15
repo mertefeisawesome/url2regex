@@ -218,3 +218,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# JavaScript/TypeScript dependencies and build caches
+node_modules/
+.npm/
+*.tsbuildinfo
+
+# Packaged Chrome extension artifacts
+extension/*.zip
+extension/*.crx
+extension/*.pem
