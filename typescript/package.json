@@ -1,0 +1,46 @@
+{
+  "name": "url2regex",
+  "version": "0.1.0-alpha.0",
+  "description": "Generate compact regular expressions from lists of URLs or paths.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
+    "./node": {
+      "types": "./src/node.d.ts",
+      "import": "./src/node.js"
+    }
+  },
+  "types": "./src/index.d.ts",
+  "files": [
+    "src",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mertefeisawesome/url2regex.git",
+    "directory": "typescript"
+  },
+  "bugs": {
+    "url": "https://github.com/mertefeisawesome/url2regex/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check:package": "node scripts/check-package.mjs",
+    "prepack": "npm test"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

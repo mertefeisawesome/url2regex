@@ -62,7 +62,10 @@ jobs:
               metadata_name, = [name for name in names if name.endswith(".dist-info/METADATA")]
               metadata = email.message_from_bytes(archive.read(metadata_name))
               assert metadata["License-Expression"] == "MIT"
-              assert metadata.get_payload().strip() == Path("python/README.md").read_text().strip()
+              # Core metadata is UTF-8; the legacy email parser otherwise
+              # replaces non-ASCII README characters when no charset is set.
+              description = metadata.get_payload(decode=True).decode("utf-8")
+              assert description.strip() == Path("python/README.md").read_text(encoding="utf-8").strip(), "Packaged README differs from source"
               license_name, = [name for name in names if name.endswith(".dist-info/licenses/LICENSE")]
               assert archive.read(license_name) == license_text
           source, = Path("python/dist").glob("*.tar.gz")

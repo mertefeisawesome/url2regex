@@ -1,170 +1,208 @@
 # url2regex
 
-Generate compact regular expressions from lists of URLs or paths by grouping
-shared prefixes. Useful for building page filters and checking selected URL sets.
+<p align="center">
+  <img src="assets/branding/logo-transparent-light.png" alt="url2regex" width="320">
+</p>
 
-The Python library is in development, with generation, path extraction, CSV
-loading, and validation implemented. It has not been published to PyPI yet.
-TypeScript/npm support and a Chrome extension are planned.
+Turn a list of URLs or paths into a compact regular expression. Shared prefixes
+are grouped, literal regex characters are escaped, and duplicates are removed
+without modifying your data.
 
-## Install for development
+```text
+/products/shoes
+/products/hats
+/about
 
-Requires Python 3.10 or newer. From a clone of this repository:
-
-```sh
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e ./python
+→ ^/(?:about|products/(?:hats|shoes))$
 ```
 
-On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1` instead.
-Select this environment's Python interpreter in your editor. The editable
-installation uses your working source, so changes take effect without reinstalling.
-There are no third-party runtime dependencies.
+## Use cases
+
+- Build a filter for selected pages in Google Analytics or Search Console.
+- Convert a CSV export of landing pages into a pattern without writing alternatives by hand.
+- Extract paths from URLs when the destination tool uses a page-path dimension.
+- Check whether a regex includes intended pages and excludes supplied negatives.
+- Generate patterns in Python scripts, Node.js tools, browser applications, or
+  the Chrome toolbar popup.
+
+The project began as a Colab notebook for analytics filters. It now provides a
+Python package, a JavaScript package with TypeScript declarations, and a Chrome
+extension using the same JavaScript generator.
+
+## Platforms and availability
+
+| Platform | Availability | Features |
+| --- | --- | --- |
+| [Python / PyPI](https://pypi.org/project/url2regex/) | Stable `0.1.0`; Python 3.10+ | Generation, path extraction, CSV loading, validation |
+| [JavaScript / npm](https://www.npmjs.com/package/url2regex) | ESM, Node.js 20+ and modern browsers | Generation, path extraction, CSV import, validation |
+| TypeScript | Declarations included in the npm package | Typed JavaScript API; no compiler required at runtime |
+| Chrome extension | Submitted to Chrome Web Store; review pending confirmation | Pasted lists, optional path extraction, output selection/copy |
+
+Both libraries have no third-party runtime dependencies. The extension processes
+input locally, with no accounts, network requests, or requested permissions.
+CSV import and validation are not yet exposed in the extension popup.
+
+## Installation
+
+### Python
+
+```sh
+python -m pip install url2regex
+```
+
+### JavaScript / TypeScript
+
+```sh
+npm install url2regex
+```
+
+Use ESM imports in Node (`.mjs` or `"type": "module"` in `package.json`). Browser
+applications can resolve npm imports with their build tool.
+
+### Chrome
+
+To try the extension before store approval, clone the repository and build it:
+
+```sh
+node extension/build.mjs
+```
+
+Open `chrome://extensions`, enable **Developer mode**, select **Load unpacked**,
+and choose `extension/dist`. Pin the extension, paste one URL or path per line,
+and select **Generate regex**. See the [extension guide](extension/README.md).
 
 ## Quick start
+
+Python:
 
 ```python
 import re
 from url2regex import urls_to_regex
 
-paths = ["/products/shoes", "/products/hats", "/about"]
-pattern = urls_to_regex(paths)
-
-print(pattern)
-# ^/(?:about|products/(?:hats|shoes))$
-
-assert re.fullmatch(pattern, "/products/shoes") is not None
-assert re.fullmatch(pattern, "/products/bags") is None
+pattern = urls_to_regex(["/a", "/a/b"])
+assert re.fullmatch(pattern, "/a/b") is not None
+assert re.fullmatch(pattern, "/ab") is None
 ```
 
-By default, the pattern matches inputs as supplied. Full URLs remain full URLs;
-paths remain paths. Query strings, fragments, percent encoding, case, and trailing
-slashes are preserved. Duplicate inputs are removed without modifying your list.
-Grouping makes patterns compact but does not guarantee the shortest possible regex.
+JavaScript / TypeScript:
 
-## Generate paths from URLs
+```js
+import { urlsToRegex } from "url2regex";
 
-```python
-from url2regex import urls_to_regex
-
-pattern = urls_to_regex(
-    ["https://example.com/products/shoes?color=red#details"],
-    target="path",
-)
-# ^/products/shoes$
+const pattern = urlsToRegex(["/a", "/a/b"]);
+console.assert(new RegExp(pattern).test("/a/b"));
+console.assert(!new RegExp(pattern).test("/ab"));
 ```
 
-Path mode drops the origin, query, and fragment. It accepts existing paths,
-preserves trailing slashes and percent encoding, and uses `/` for a URL with no
-path. URLs on different domains may become the same path.
+Both return `^/a(?:/b)?$`. Default mode preserves supplied strings, including
+queries, fragments, case, percent encoding, and trailing slashes. Full URLs stay
+full URLs; paths stay paths. Mixed input is allowed. This generates patterns,
+not shortened URLs, and does not guarantee the shortest possible regex.
 
-## Load a CSV
+## Paths, CSV input, and validation
 
-The [shared sample CSV](examples/urls.csv) has a `URL` column and a category column.
-Run this snippet from the repository root:
+| Task | Python | JavaScript / TypeScript |
+| --- | --- | --- |
+| Preserve input | `urls_to_regex(values)` | `urlsToRegex(values)` |
+| Extract paths | `urls_to_regex(urls, target="path")` | `urlsToRegex(urls, { target: "path" })` |
+| Read CSV file | `read_urls_csv(file, column="URL")` | `await readUrlsCsv(file, { column: "URL" })` from `url2regex/node` |
+| Parse CSV text | Use the file loader | `parseUrlsCsv(text, { column: "URL" })` from `url2regex` |
+| Validate | `validate_regex(pattern, positives=values, negatives=others)` | `validateRegex(pattern, { positives: values, negatives: others })` |
 
-```python
-from url2regex import read_urls_csv, urls_to_regex
+Full API guides: [Python](python/README.md) and [JavaScript / TypeScript](typescript/README.md).
 
-urls = read_urls_csv("examples/urls.csv")  # Automatic column detection
-# Or select explicitly:
-urls = read_urls_csv("examples/urls.csv", column="URL")
-pattern = urls_to_regex(urls)
-```
+Path extraction drops origins, queries, and fragments, preserves trailing
+slashes and percent encoding, and uses `/` for URLs without paths. Different
+domains can collapse to the same path.
 
-The loader supports comma-delimited UTF-8 files with optional BOMs and quoted
-fields. Headers are expected by default. For headerless files, use
-`header=False, column=0` to select the first column.
+CSV loaders detect URL/path columns or accept manual selection, support headers
+and explicit headerless input, and handle quoted fields and BOMs. They skip blank
+cells and preserve other values. Ambiguous columns require selection.
 
-Automatic detection examines column names and nonblank values. It requires one
-unambiguous candidate; specify `column` if detection fails or finds multiple
-candidates. Empty and whitespace-only cells are skipped. Other values are
-preserved, including surrounding whitespace that the generator will reject.
+Validators report missed positives, matched negatives, and syntax errors.
+Negatives are optional. They require whole-string matches in their own language's
+engine; passing confirms only supplied examples. Use paths as validation examples
+when generating path-only patterns.
 
-## Validate a pattern
+Generation rejects empty input, non-string entries, empty strings, and surrounding
+whitespace instead of silently cleaning values. See the package guides for error
+types and Python's optional source-literal output format.
 
-```python
-from url2regex import urls_to_regex, validate_regex
+## Analytics and regex compatibility
 
-paths = ["/a", "/a/b"]
-pattern = urls_to_regex(paths)
-report = validate_regex(pattern, positives=paths, negatives=["/ab", "/a/c"])
-
-assert report.passed
-print(report.missed_positives)   # []
-print(report.matched_negatives)  # []
-print(report.syntax_error)       # None
-```
-
-`negatives` is optional. Validation uses Python's `re.fullmatch()` and returns a
-`ValidationReport`. Invalid regex syntax produces a failed report with
-`syntax_error`; example checks are skipped in that case. Passing confirms only
-the supplied examples, not exclusion of every possible unwanted string. With no
-examples, it only confirms successful compilation.
-
-For a path-only pattern, supply paths as validation examples, not full URLs.
-
-## Output formats and errors
-
-- `output="pattern"` (default) returns regex text ready for Python's regex engine.
-- `output="python_literal"` returns source text, such as `r"^/a$"`, for pasting
-  into Python code. Do not pass that quoted source text directly to `re.compile()`.
-  Regular escaped literals are used when needed to represent the pattern safely.
-
-The generator accepts a nonempty Python list of strings. Empty strings and
-surrounding whitespace raise `ValueError`; wrong argument types raise
-`TypeError`. Unknown target/output options raise `ValueError`. It does not
-silently trim values or validate every input as a standards-compliant URL.
-
-The CSV loader raises `ValueError` for malformed records, missing/duplicate
-selected columns, failed detection, or a selected column with no values. Standard
-file errors, such as `FileNotFoundError`, propagate. The validator raises
-`TypeError` for invalid argument types and permits empty strings as examples.
-
-## Regex compatibility
-
-Patterns use literals, escaping, non-capturing groups, alternatives, optional
-groups, and `^`/`$` anchors. They contain no surrounding `/…/` delimiters.
-The syntax is intended for a common Python, JavaScript, and RE2 subset; current
-automated validation executes Python only.
-
-Use `re.fullmatch()` for strict Python checks: `$` can also match before a final
-newline when used with search. Consumer flags, including case-insensitive or
-multiline matching, can change behavior.
+Generated patterns use escaped literals, groups, alternatives, optional groups,
+and anchors intended for a common Python/JavaScript/RE2 subset. Both language
+implementations test the shared real-world fixtures. Validators execute their
+own engine; unusual URL parsing cases can differ between languages.
 
 [Google Analytics](https://support.google.com/analytics/answer/1034324?hl=en-uk)
 documents full matching and case sensitivity by default.
 [Search Console](https://support.google.com/webmasters/answer/17011165?hl=en)
 documents partial matching and case-insensitive matching by default. Anchors
-restrict the match, but do not change case sensitivity. Search Console's
+restrict the match, but do not override case sensitivity. Search Console's
 `(?-i)` prefix can force case sensitivity there; it is not portable to JavaScript.
-Select a full-URL or path dimension consistent with the generated pattern.
 
-No product-specific regex length limits are enforced. Generated patterns have
-not been verified inside either analytics product.
+Match the generated representation to the destination field: full URLs for a
+full-URL field, paths for a path field. Product-specific length limits are not
+enforced. Live analytics-product verification has not been performed.
 
-## Examples and tests
+## Examples
 
-Runnable Python examples:
+| Example | Python | JavaScript / TypeScript |
+| --- | --- | --- |
+| Basic generation | [basic_usage.py](examples/python/basic_usage.py) | [basic_usage.mjs](examples/typescript/basic_usage.mjs) |
+| CSV import | [csv_input.py](examples/python/csv_input.py) | [csv_input.mjs](examples/typescript/csv_input.mjs) |
+| Path extraction | [path_extraction.py](examples/python/path_extraction.py) | Demonstrated in the [package guide](typescript/README.md#extract-paths-from-full-urls) |
+| Validation | [validation.py](examples/python/validation.py) | [validation.mjs](examples/typescript/validation.mjs) |
 
-- [Basic generation and Python-literal output](examples/python/basic_usage.py)
-- [CSV import](examples/python/csv_input.py)
-- [Path extraction](examples/python/path_extraction.py)
-- [Validation reports](examples/python/validation.py)
+CSV examples use the same synthetic [urls.csv](examples/urls.csv). Run Python
+examples with the development environment active and JavaScript examples with
+Node.js, from the repository root.
 
-With the development environment active, run from the repository root:
+## Install for development
+
+Clone the repository. Python setup from its root:
 
 ```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ./python
 python -m unittest discover -s python/tests -v
+```
+
+On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1` instead. Select
+the environment's interpreter in your editor. Editable installation uses the
+working source without `PYTHONPATH` overrides.
+
+JavaScript setup and tests from the repository root:
+
+```sh
+npm --prefix typescript ci
+npm --prefix typescript test
+npm --prefix typescript run check:package
+node examples/typescript/basic_usage.mjs
+node examples/typescript/csv_input.mjs
+node examples/typescript/validation.mjs
+```
+
+The examples import working source. To test package-name imports locally, run
+`npm pack` in `typescript/` and install the resulting tarball in a consuming
+project. The main export is browser-safe; filesystem loading is isolated in
+`url2regex/node`.
+
+Python CI builds distributions, checks metadata and license consistency, and
+tests the installed wheel. JavaScript CI checks Node 20, 22, 24, and 26 against
+the packed npm artifact, runs TypeScript consumer checks, and verifies extension
+packaging and popup behavior. Shared [real-world fixtures](fixtures/README.md)
+support both language suites. Run the Python benchmark separately:
+
+```sh
 python python/tests/benchmark_generator.py --repeats 5
 ```
 
-The benchmark uses [shared real-world fixtures](fixtures/README.md), reports
-timing, Python allocation, and pattern length, and checks positive/negative
-matching. It currently benchmarks full-URL mode. Timing limits are optional and
-machine-dependent; ordinary tests have no speed threshold.
+It measures full-URL generation, compilation, matching, allocation, and pattern
+length. Timing budgets are optional and machine-dependent.
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE). [Report an issue](https://github.com/mertefeisawesome/url2regex/issues).
