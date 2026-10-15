@@ -1,0 +1,71 @@
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-pypi
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Check licenses and required fixtures
+        run: |
+          cmp LICENSE python/LICENSE
+          test -f fixtures/real-world/positives.csv
+          test -f fixtures/real-world/negatives.csv
+      - name: Build and check distributions
+        run: |
+          python -m pip install build twine
+          python -m build python
+          python -m twine check --strict python/dist/*
+      - name: Test installed wheel
+        run: |
+          python -m venv .venv-wheel
+          .venv-wheel/bin/python -m pip install --no-index --no-deps python/dist/*.whl
+          .venv-wheel/bin/python -I - <<'PY'
+          from pathlib import Path
+          import sys
+          import url2regex
+          assert Path(url2regex.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+          PY
+          .venv-wheel/bin/python -I -m unittest discover -s python/tests -v
+          for example in examples/python/*.py; do
+            .venv-wheel/bin/python -I "$example"
+          done
+          .venv-wheel/bin/python -m pip check
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pypi-distributions
+          path: python/dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/project/url2regex/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: pypi-distributions
+          path: dist/
+      - name: Publish distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
