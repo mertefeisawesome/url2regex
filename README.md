@@ -179,6 +179,7 @@ JavaScript setup and tests from the repository root:
 ```sh
 npm --prefix typescript ci
 npm --prefix typescript test
+npm --prefix typescript run check:package
 node examples/typescript/basic_usage.mjs
 node examples/typescript/csv_input.mjs
 node examples/typescript/validation.mjs
@@ -190,7 +191,9 @@ project. The main export is browser-safe; filesystem loading is isolated in
 `url2regex/node`.
 
 Python CI builds distributions, checks metadata and license consistency, and
-tests the installed wheel. Shared [real-world fixtures](fixtures/README.md)
+tests the installed wheel. JavaScript CI checks Node 20, 22, 24, and 26 against
+the packed npm artifact, runs TypeScript consumer checks, and verifies extension
+packaging and popup behavior. Shared [real-world fixtures](fixtures/README.md)
 support both language suites. Run the Python benchmark separately:
 
 ```sh

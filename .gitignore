@@ -228,3 +228,6 @@ node_modules/
 extension/*.zip
 extension/*.crx
 extension/*.pem
+
+# Local planning document
+/ROADMAP.md

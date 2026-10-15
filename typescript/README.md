@@ -179,6 +179,8 @@ JavaScript.
 Run `npm test` from `typescript/`. Tests include the shared real-world fixtures.
 `npm pack` runs tests and creates an inspectable package tarball. TypeScript
 declarations are included; they do not require compilation to use the library.
+Run `npm run check:package` after `npm ci` to verify the installed tarball's
+runtime tests, examples, TypeScript declarations, and browser-safe import graph.
 
 ## License
 
