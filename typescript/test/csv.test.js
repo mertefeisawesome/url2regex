@@ -37,6 +37,19 @@ test("headerless files preserve the first row with detection or explicit index",
   assert.deepEqual(parseUrlsCsv(text, { header: false, column: 1 }), ["/a", "/b"]);
 });
 
+test("automatic headers preserve first URLs and explicit overrides", () => {
+  for (const [text, options, expected] of [
+    ["https://example.com/a\n/b\n", {}, ["https://example.com/a", "/b"]],
+    ["/only\n", {}, ["/only"]],
+    ["\uFEFF1,/a\n2,/b\n", { header: "auto" }, ["/a", "/b"]],
+    ["1,/a\n2,/b\n", { column: 1 }, ["/a", "/b"]],
+    ["blog/one\nblog/two\n", { column: 0 }, ["blog/one", "blog/two"]],
+    ["/heading\n/a\n", { header: true }, ["/a"]],
+    ["/a,/b\n/c,/d\n", { column: 1 }, ["/b", "/d"]],
+  ]) assert.deepEqual(parseUrlsCsv(text, options), expected);
+  assert.throws(() => parseUrlsCsv("/a,/b\n/c,/d\n"), /Ambiguous/);
+});
+
 test("empty, unsuitable, missing and duplicated columns report errors", () => {
   for (const [text, options, error] of [
     ["", {}, /empty/], ["Title,Clicks\nHello,2\n", {}, /No URL\/path/],
@@ -56,7 +69,7 @@ test("malformed quoted CSV and inconsistent record widths are rejected", () => {
 
 test("invalid argument types are rejected", () => {
   for (const [text, options] of [[null, {}], [42, {}], ["URL\n/a", null], ["URL\n/a", []],
-    ["URL\n/a", { header: "no" }], ["URL\n/a", { column: 0 }],
+    ["URL\n/a", { header: "no" }], ["URL\n/a", { header: true, column: 0 }],
     ["/a", { header: false, column: "URL" }], ["/a", { header: false, column: true }],
     ["/a", { header: false, column: 0.5 }]]) {
     assert.throws(() => parseUrlsCsv(text, options), TypeError);
