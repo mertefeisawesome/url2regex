@@ -1,7 +1,8 @@
 # url2regex extension privacy policy
 
-The url2regex Chrome extension converts the URLs or paths you paste into its
-popup into a regular expression. Processing takes place locally in your browser.
+The url2regex Chrome extension converts the URLs or paths you paste or import
+from a CSV file into a regular expression. Processing takes place locally in
+your browser.
 
 The extension does not collect, transmit, sell, or share your input or generated
 patterns. It does not use analytics, advertising, accounts, or tracking services.

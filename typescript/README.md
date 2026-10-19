@@ -31,7 +31,7 @@ import { urlsToRegex } from "url2regex";
 const paths = ["/products/shoes", "/products/hats", "/about"];
 const pattern = urlsToRegex(paths);
 console.log(pattern);
-// ^/(?:about|products/(?:hats|shoes))$
+// ^\/(?:about|products\/(?:hats|shoes))$
 
 console.assert(new RegExp(pattern).test("/products/shoes"));
 console.assert(!new RegExp(pattern).test("/products/bags"));
@@ -52,7 +52,7 @@ const pattern = urlsToRegex(
   { target: "path" },
 );
 console.log(pattern);
-// ^/products/shoes$
+// ^\/products\/shoes$
 ```
 
 `target: "path"` removes the origin, query, and fragment. Existing paths are also
@@ -92,9 +92,14 @@ async function urlsFromFile(file) {
 }
 ```
 
-`parseUrlsCsv(text, options)` is synchronous and also works in Node.js. Headers
-are expected by default. For headerless input, use `{ header: false, column: 0 }`
-to select the first column. BOMs, quoted commas, escaped quotes, multiline
+`parseUrlsCsv(text, options)` is synchronous and also works in Node.js.
+Header detection defaults to `header: "auto"`: a URL or leading-slash path in
+the first row identifies it as data; otherwise that row is treated as headers.
+A column name implies headers, and a column index implies headerless input.
+Use `header: true` or `header: false` to override detection. Headerless relative
+paths such as `blog/post` need `header: false` or an explicit column index:
+`{ column: 0 }` selects the first column and keeps its first row.
+BOMs, quoted commas, escaped quotes, multiline
 fields, and CRLF/LF/CR record endings are supported.
 
 Automatic detection examines headers and nonblank values. All nonblank values

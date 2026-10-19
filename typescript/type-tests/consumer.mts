@@ -6,6 +6,8 @@ import { readUrlsCsv } from "url2regex/node";
 
 const regexOptions: RegexOptions = { target: "path" };
 const csvOptions: CsvOptions = { header: false, column: 0 };
+parseUrlsCsv("/a\n/b", { column: 0 });
+parseUrlsCsv("/a\n/b", { header: "auto" });
 const values: string[] = parseUrlsCsv("URL\n/a\n");
 const pattern: string = urlsToRegex(values, regexOptions);
 const report: ValidationReport = validateRegex(pattern, { positives: values, negatives: ["/b"] });
@@ -20,7 +22,7 @@ urlsToRegex([123]);
 // @ts-expect-error Target must be a known representation.
 urlsToRegex(values, { target: "guess" });
 // @ts-expect-error Headered CSV columns are selected by name.
-parseUrlsCsv("URL\n/a\n", { column: 0 });
+parseUrlsCsv("URL\n/a\n", { header: true, column: 0 });
 // @ts-expect-error Headerless CSV columns are selected by index.
 readUrlsCsv("pages.csv", { header: false, column: "URL" });
 // @ts-expect-error Positives are required.

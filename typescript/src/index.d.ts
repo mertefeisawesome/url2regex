@@ -24,10 +24,15 @@ export interface ValidationReport {
 export function validateRegex(pattern: string, options: ValidationOptions): ValidationReport;
 
 export type CsvOptions =
-  | { header?: true; column?: string | null }
+  | { header?: "auto"; column?: string | number | null }
+  | { header: true; column?: string | null }
   | { header: false; column?: number | null };
 
 /** Parse comma-delimited CSV text. Detect the URL/path column unless selected.
+ * Header detection defaults to "auto": first-row URLs or leading-slash paths
+ * are data; other first rows are headers. A column name implies headers and an
+ * index implies headerless input. Explicit booleans override detection.
+ * Headerless relative paths require header:false or a column index.
  * Supports UTF-8 BOMs, quoted fields, and embedded newlines. Skips blank cells;
  * preserves other values. TypeError for invalid arguments; RangeError for bad CSV
  * or ambiguous/missing columns. No filesystem or Node APIs are imported.

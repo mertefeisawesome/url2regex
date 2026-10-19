@@ -45,7 +45,7 @@ export function urlsToRegex(values, { target = "input" } = {}) {
 
 function escapeLiteral(char) {
   const controls = {"\n": "\\n", "\r": "\\r", "\t": "\\t", "\u2028": "\\u2028", "\u2029": "\\u2029"};
-  return controls[char] ?? ("\\.^$*+?{}[]()|".includes(char) ? `\\${char}` : char);
+  return controls[char] ?? ("\\.^$*+?{}[]()|/".includes(char) ? `\\${char}` : char);
 }
 
 function extractPath(value) {

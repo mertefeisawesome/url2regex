@@ -4,14 +4,22 @@ export function parseUrlsCsv(text, options = {}) {
   if (options === null || typeof options !== "object" || Array.isArray(options)) {
     throw new TypeError("options must be an object");
   }
-  const { header = true, column = null } = options;
-  if (typeof header !== "boolean") throw new TypeError("header must be a boolean");
-  if (column !== null && (header ? typeof column !== "string" : !Number.isInteger(column))) {
+  let { header = "auto", column = null } = options;
+  const automatic = header === "auto";
+  if (!automatic && typeof header !== "boolean") throw new TypeError("header must be a boolean or 'auto'");
+  if (!automatic && column !== null && (header ? typeof column !== "string" : !Number.isInteger(column))) {
     throw new TypeError(header ? "column must be a name when header=true" : "column must be a zero-based index when header=false");
+  }
+
+  if (automatic && column !== null && typeof column !== "string" && !Number.isInteger(column)) {
+    throw new TypeError("column must be a name or zero-based index");
   }
 
   const rows = parseRows(text.replace(/^\uFEFF/, ""));
   if (!rows.length) throw new RangeError("CSV file is empty");
+  if (automatic) {
+    header = column !== null ? typeof column === "string" : !rows[0].some(value => looksLikeLocation(value, false));
+  }
   const width = rows[0].length;
   const names = header ? rows[0] : Array.from({ length: width }, (_, index) => index);
   const data = header ? rows.slice(1) : rows;

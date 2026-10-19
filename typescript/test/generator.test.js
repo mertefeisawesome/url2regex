@@ -5,6 +5,29 @@ import { urlsToRegex, parseUrlsCsv } from "../src/index.js";
 
 const fullmatch = (pattern, value) => new RegExp(pattern).exec(value)?.[0] === value;
 
+test("forward slashes are escaped by default", () => {
+  const cases = [
+    [["/"], {}, String.raw`^\/$`, ["/"]],
+    [["https://example.com/a/"], {}, String.raw`^https:\/\/example\.com\/a\/$`, ["https://example.com/a/"]],
+    [["//a///b/"], {}, String.raw`^\/\/a\/\/\/b\/$`, ["//a///b/"]],
+    [["/a", "/a/b"], {}, String.raw`^\/a(?:\/b)?$`, ["/a", "/a/b"]],
+    [["https://example.com/a/?q=1"], { target: "path" }, String.raw`^\/a\/$`, ["/a/"]],
+    [[String.raw`/a\/b`], {}, String.raw`^\/a\\\/b$`, [String.raw`/a\/b`]],
+  ];
+  for (const [values, options, expected, positives] of cases) {
+    const pattern = urlsToRegex(values, options);
+    assert.equal(pattern, expected);
+    // Compile as JavaScript source too: an unescaped slash would end the literal.
+    const literal = new Function(`return /${pattern}/;`)();
+    for (const value of positives) {
+      assert.ok(fullmatch(pattern, value), value);
+      assert.equal(literal.exec(value)?.[0], value);
+    }
+    assert.ok(!fullmatch(pattern, "/unrelated"));
+    assert.equal(literal.test("/unrelated"), false);
+  }
+});
+
 test("literal inputs, optional suffixes and exact negatives", () => {
   const positives = ["/a", "/a/b", "/a.b", "/a?q=1#x", "/a/", "/café/猫", "/😀", "/😁", "/a(1)+[x]{2}"];
   const pattern = urlsToRegex(positives);

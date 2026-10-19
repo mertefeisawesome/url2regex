@@ -3,6 +3,8 @@ import { mkdir, copyFile, readFile } from "node:fs/promises";
 const dist = new URL("./dist/", import.meta.url);
 await mkdir(new URL("lib/", dist), { recursive: true });
 await mkdir(new URL("icons/", dist), { recursive: true });
+await mkdir(new URL("branding/", dist), { recursive: true });
+await copyFile(new URL("../assets/branding/logo-transparent-light.png", import.meta.url), new URL("branding/logo.png", dist));
 for (const size of [16, 32, 48, 128]) {
   await copyFile(new URL(`icons/icon${size}.png`, import.meta.url), new URL(`icons/icon${size}.png`, dist));
 }

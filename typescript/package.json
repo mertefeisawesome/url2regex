@@ -1,6 +1,6 @@
 {
   "name": "url2regex",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Generate compact regular expressions from lists of URLs or paths.",
   "type": "module",
   "exports": {

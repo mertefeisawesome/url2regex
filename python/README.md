@@ -29,7 +29,7 @@ from url2regex import urls_to_regex
 paths = ["/products/shoes", "/products/hats", "/about"]
 pattern = urls_to_regex(paths)
 print(pattern)
-# ^/(?:about|products/(?:hats|shoes))$
+# ^\/(?:about|products\/(?:hats|shoes))$
 
 assert re.fullmatch(pattern, "/products/shoes") is not None
 assert re.fullmatch(pattern, "/products/bags") is None
@@ -50,12 +50,12 @@ pattern = urls_to_regex(
     target="path",
 )
 print(pattern)
-# ^/products/shoes$
+# ^\/products\/shoes$
 ```
 
 `target="path"` removes the origin, query, and fragment. Existing paths are also
 accepted. Trailing slashes and percent encoding are preserved; URLs without a
-path become `/`. Different domains may collapse to the same path.
+path become `\/`. Different domains may collapse to the same path.
 
 ## Read URLs from CSV
 
@@ -76,8 +76,12 @@ urls = read_urls_csv("pages.csv", column="URL")  # Or select it explicitly
 pattern = urls_to_regex(urls)
 ```
 
-Headers are expected by default. For headerless files, use
-`read_urls_csv("pages.csv", header=False, column=0)` to select the first column.
+Header detection defaults to `header="auto"`: a URL or leading-slash path in
+the first row identifies it as data; otherwise that row is treated as headers.
+A column name implies headers, and a column index implies headerless input.
+Use `header=True` or `header=False` to override detection. Headerless relative
+paths such as `blog/post` need `header=False` or an explicit column index:
+`read_urls_csv("pages.csv", column=0)` selects the first column and keeps its first row.
 UTF-8 BOMs and quoted CSV fields are supported.
 
 Automatic detection examines headers and nonblank values. All nonblank values
@@ -123,7 +127,7 @@ from url2regex import urls_to_regex
 
 source = urls_to_regex(["/a"], output="python_literal")
 print(source)
-# r"^/a$"
+# r"^\/a$"
 ```
 
 This is a representation of the pattern, not a pattern to compile directly.

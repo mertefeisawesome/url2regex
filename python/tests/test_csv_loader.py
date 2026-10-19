@@ -43,6 +43,22 @@ class CsvLoaderTests(unittest.TestCase):
         self.assertEqual(self.read(text, header=False), ["/a", "/b"])
         self.assertEqual(self.read(text, header=False, column=1), ["/a", "/b"])
 
+    def test_automatic_headers_preserve_first_url_and_explicit_overrides(self):
+        cases = [
+            ("https://example.com/a\n/b\n", {}, ["https://example.com/a", "/b"]),
+            ("/only\n", {}, ["/only"]),
+            ("\ufeff1,/a\n2,/b\n", {"header": "auto"}, ["/a", "/b"]),
+            ("1,/a\n2,/b\n", {"column": 1}, ["/a", "/b"]),
+            ("blog/one\nblog/two\n", {"column": 0}, ["blog/one", "blog/two"]),
+            ("/heading\n/a\n", {"header": True}, ["/a"]),
+            ("/a,/b\n/c,/d\n", {"column": 1}, ["/b", "/d"]),
+        ]
+        for text, options, expected in cases:
+            with self.subTest(text=text, options=options):
+                self.assertEqual(self.read(text, **options), expected)
+        with self.assertRaisesRegex(ValueError, "Ambiguous"):
+            self.read("/a,/b\n/c,/d\n")
+
     def test_clear_errors_for_missing_or_unsuitable_columns(self):
         cases = [
             ("", {}, "empty"),
@@ -64,7 +80,7 @@ class CsvLoaderTests(unittest.TestCase):
                     self.read(text)
 
     def test_option_type_errors(self):
-        for options in [{"header": "no"}, {"column": 0}, {"header": False, "column": "URL"}]:
+        for options in [{"header": "no"}, {"header": True, "column": 0}, {"header": False, "column": "URL"}]:
             with self.subTest(options=options):
                 with self.assertRaises(TypeError):
                     self.read("URL\n/a\n", **options)
