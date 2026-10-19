@@ -76,8 +76,12 @@ urls = read_urls_csv("pages.csv", column="URL")  # Or select it explicitly
 pattern = urls_to_regex(urls)
 ```
 
-Headers are expected by default. For headerless files, use
-`read_urls_csv("pages.csv", header=False, column=0)` to select the first column.
+Header detection defaults to `header="auto"`: a URL or leading-slash path in
+the first row identifies it as data; otherwise that row is treated as headers.
+A column name implies headers, and a column index implies headerless input.
+Use `header=True` or `header=False` to override detection. Headerless relative
+paths such as `blog/post` need `header=False` or an explicit column index:
+`read_urls_csv("pages.csv", column=0)` selects the first column and keeps its first row.
 UTF-8 BOMs and quoted CSV fields are supported.
 
 Automatic detection examines headers and nonblank values. All nonblank values

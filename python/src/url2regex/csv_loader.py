@@ -26,11 +26,16 @@ def read_urls_csv(
     file: str | PathLike[str],
     *,
     column: str | int | None = None,
-    header: bool = True,
+    header: bool | str = "auto",
 ) -> list[str]:
     """Read URL/path values from an explicit or automatically detected column.
 
-    Read a comma-delimited UTF-8 file (with optional BOM). With headers, select
+    Read a comma-delimited UTF-8 file (with optional BOM). ``header="auto"``
+    preserves a first row containing a URL or leading-slash path; otherwise it
+    treats the first row as headers. A column name implies headers, and an index
+    implies headerless input. Explicit booleans override detection. Ambiguous
+    headerless relative paths require ``header=False`` or a column index.
+    With headers, select
     by exact column name; with ``header=False``, select by zero-based index.
     Omitting ``column`` detects columns whose nonblank values all resemble URLs
     or paths. Indicative headers also allow relative paths containing slashes.
@@ -39,13 +44,17 @@ def read_urls_csv(
     unchanged, including surrounding whitespace. Malformed/empty CSVs, missing
     columns, and ambiguous detection raise ValueError. File errors propagate.
     """
-    if not isinstance(header, bool):
-        raise TypeError("header must be a bool")
+    if not isinstance(header, bool) and header != "auto":
+        raise TypeError("header must be a bool or 'auto'")
+    automatic = header == "auto"
     if column is not None:
-        if header and not isinstance(column, str):
+        if not automatic and header and not isinstance(column, str):
             raise TypeError("column must be a name when header=True")
-        if not header and (not isinstance(column, int) or isinstance(column, bool)):
+        if not automatic and not header and (not isinstance(column, int) or isinstance(column, bool)):
             raise TypeError("column must be a zero-based index when header=False")
+
+    if automatic and column is not None and (isinstance(column, bool) or not isinstance(column, (str, int))):
+        raise TypeError("column must be a name or zero-based index")
 
     try:
         with open(file, encoding="utf-8-sig", newline="") as stream:
@@ -54,6 +63,12 @@ def read_urls_csv(
         raise ValueError(f"Malformed CSV: {error}") from error
     if not rows:
         raise ValueError("CSV file is empty")
+
+    if automatic:
+        if column is not None:
+            header = isinstance(column, str)
+        else:
+            header = not any(_looks_like_location(cell, named_column=False) for cell in rows[0])
 
     width = len(rows[0])
     names = rows[0] if header else list(range(width))
