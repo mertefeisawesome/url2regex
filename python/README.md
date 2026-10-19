@@ -29,7 +29,7 @@ from url2regex import urls_to_regex
 paths = ["/products/shoes", "/products/hats", "/about"]
 pattern = urls_to_regex(paths)
 print(pattern)
-# ^/(?:about|products/(?:hats|shoes))$
+# ^\/(?:about|products\/(?:hats|shoes))$
 
 assert re.fullmatch(pattern, "/products/shoes") is not None
 assert re.fullmatch(pattern, "/products/bags") is None
@@ -50,12 +50,12 @@ pattern = urls_to_regex(
     target="path",
 )
 print(pattern)
-# ^/products/shoes$
+# ^\/products\/shoes$
 ```
 
 `target="path"` removes the origin, query, and fragment. Existing paths are also
 accepted. Trailing slashes and percent encoding are preserved; URLs without a
-path become `/`. Different domains may collapse to the same path.
+path become `\/`. Different domains may collapse to the same path.
 
 ## Read URLs from CSV
 
@@ -123,7 +123,7 @@ from url2regex import urls_to_regex
 
 source = urls_to_regex(["/a"], output="python_literal")
 print(source)
-# r"^/a$"
+# r"^\/a$"
 ```
 
 This is a representation of the pattern, not a pattern to compile directly.
