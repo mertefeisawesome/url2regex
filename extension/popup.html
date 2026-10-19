@@ -2,21 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
   <title>url2regex</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h1>url2regex</h1>
-  <form id="generator">
-    <label for="urls">URLs or paths, one per line</label>
-    <textarea id="urls" rows="7" placeholder="https://example.com/a&#10;https://example.com/a/b" required></textarea>
-    <label><input id="paths" type="checkbox"> Extract paths only</label>
-    <button type="submit">Generate regex</button>
-  </form>
-  <p id="status" role="status" aria-live="polite"></p>
-  <label for="result">Pattern — select and copy</label>
-  <textarea id="result" rows="5" readonly></textarea>
-  <p>Processed in this popup. Nothing is sent to a server.</p>
+  <header><img src="branding/logo.png" alt="url2regex"><p>A shorter pattern. The same URLs.</p></header>
+  <main>
+    <form id="generator">
+      <div class="section-heading"><label for="urls">Your URLs or paths</label><label class="import" for="csv">Import CSV<input id="csv" type="file" accept=".csv,text/csv"></label></div>
+      <textarea id="urls" rows="5" placeholder="https://example.com/products/shoes&#10;https://example.com/products/hats" required spellcheck="false"></textarea>
+      <label class="option"><input id="paths" type="checkbox"><span>Extract paths only<small>Remove domains, queries and fragments</small></span></label>
+      <button class="primary" type="submit">Generate regex <span aria-hidden="true">→</span></button>
+    </form>
+    <p id="status" role="status" aria-live="polite">Ready when you are.</p>
+    <div class="section-heading"><label for="result">Your regex</label><button id="copy" class="copy" type="button" disabled>Copy pattern</button></div>
+    <textarea id="result" rows="2" readonly spellcheck="false" placeholder="Your pattern will appear here"></textarea>
+  </main>
+  <footer><span aria-hidden="true">●</span> Stays on your device. No account needed.</footer>
   <script type="module" src="popup.js"></script>
 </body>
 </html>
