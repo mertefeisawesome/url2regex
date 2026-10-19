@@ -31,7 +31,7 @@ import { urlsToRegex } from "url2regex";
 const paths = ["/products/shoes", "/products/hats", "/about"];
 const pattern = urlsToRegex(paths);
 console.log(pattern);
-// ^/(?:about|products/(?:hats|shoes))$
+// ^\/(?:about|products\/(?:hats|shoes))$
 
 console.assert(new RegExp(pattern).test("/products/shoes"));
 console.assert(!new RegExp(pattern).test("/products/bags"));
@@ -52,7 +52,7 @@ const pattern = urlsToRegex(
   { target: "path" },
 );
 console.log(pattern);
-// ^/products/shoes$
+// ^\/products\/shoes$
 ```
 
 `target: "path"` removes the origin, query, and fragment. Existing paths are also
