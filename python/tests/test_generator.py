@@ -33,6 +33,26 @@ class GeneratorTests(unittest.TestCase):
             ["", "https://example.com/", "/a1xx", "/ab", "/cafe/猫"],
         )
 
+    def test_forward_slashes_are_escaped_by_default(self):
+        cases = [
+            (["/"], {}, r"^\/$"),
+            (["https://example.com/a/"], {}, r"^https:\/\/example\.com\/a\/$"),
+            (["//a///b/"], {}, r"^\/\/a\/\/\/b\/$"),
+            (["/a", "/a/b"], {}, r"^\/a(?:\/b)?$"),
+            (["https://example.com/a/?q=1"], {"target": "path"}, r"^\/a\/$"),
+            ([r"/a\/b"], {}, r"^\/a\\\/b$"),
+        ]
+        for values, options, expected in cases:
+            with self.subTest(values=values, options=options):
+                pattern = urls_to_regex(values, **options)
+                self.assertEqual(pattern, expected)
+                literal = urls_to_regex(values, output="python_literal", **options)
+                self.assertEqual(ast.literal_eval(literal), expected)
+                positives = ["/a/"] if options else values
+                for value in positives:
+                    self.assertIsNotNone(re.fullmatch(pattern, value))
+                self.assertIsNone(re.fullmatch(pattern, "/unrelated"))
+
     def test_order_duplicates_and_input_preservation(self):
         values = ["/b", "/a/b", "/a", "/b"]
         original = values.copy()
@@ -42,7 +62,7 @@ class GeneratorTests(unittest.TestCase):
 
     def test_shared_prefix_shortens_a_representative_pattern(self):
         values = ["https://example.com/blog/python", "https://example.com/blog/javascript"]
-        naive = "^(?:" + "|".join(re.escape(value) for value in values) + ")$"
+        naive = "^(?:" + "|".join(re.escape(value).replace("/", r"\/") for value in values) + ")$"
         self.assertLess(len(urls_to_regex(values)), len(naive))
 
     def test_python_literal_round_trip(self):

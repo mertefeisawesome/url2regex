@@ -20,7 +20,7 @@ def _extract_path(value: str) -> str:
 
 def _escape(value: str) -> str:
     """Escape regex syntax, without adding source-code slash delimiters."""
-    special = frozenset(r"\.^$*+?{}[]()|")
+    special = frozenset(r"\.^$*+?{}[]()|/")
     controls = {"\n": r"\n", "\r": r"\r", "\t": r"\t"}
     return "".join(
         controls.get(char, "\\" + char if char in special else char)
