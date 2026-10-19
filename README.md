@@ -33,7 +33,7 @@ extension using the same JavaScript generator.
 
 | Platform | Availability | Features |
 | --- | --- | --- |
-| [Python / PyPI](https://pypi.org/project/url2regex/) | Stable `0.1.0`; Python 3.10+ | Generation, path extraction, CSV loading, validation |
+| [Python / PyPI](https://pypi.org/project/url2regex/) | Available on PyPI; Python 3.10+ | Generation, path extraction, CSV loading, validation |
 | [JavaScript / npm](https://www.npmjs.com/package/url2regex) | ESM, Node.js 20+ and modern browsers | Generation, path extraction, CSV import, validation |
 | TypeScript | Declarations included in the npm package | Typed JavaScript API; no compiler required at runtime |
 | Chrome extension | Submitted to Chrome Web Store; review pending confirmation | Pasted lists, optional path extraction, output selection/copy |
